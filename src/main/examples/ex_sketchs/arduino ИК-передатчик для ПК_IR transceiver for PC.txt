@@ -1,0 +1,36 @@
+// урок от Дмитрия Осипова. ИК-передатчик для компьютера. IR transceiver for PC. Infrared Transmitter for PC
+// ВАЖНО !!! (PIN 3;) вЫход ИК передатчика ((PIN 3;)на другой пин изменить нельзя)
+#include <IRremote.h> // это скачанная библиотека 
+
+#define PanasonicAddress      0x4004  
+
+#define P1        0x1000809  //ВАЖНО !!! ( 1000809 ) это код кнопки №1 - моего пульта от телевизора Panasonic - у вашего пульта будет другой код - замените на свой
+#define P2        0x1008889  
+#define P3        0x1004849 
+#define P4        0x100C8C9 
+#define P5        0x1002829 
+#define P6        0x100A8A9 
+
+#define JVC1      0xFB05 //( FB05 ) это код кнопки пульта от видеокамеры JVC (ZOOM)
+#define JVC2      0xFB85
+
+IRsend irsend;
+
+void setup()
+{
+  Serial.begin(9600);   //установка порта на скорость 9600 бит/сек
+}
+void loop()
+{
+  while (Serial.available() == 0); //функция  Serial.аvailable() проверяет, есть ли в COM порте доступные для чтения данные, мы будем «топтаться» на месте и ожидать данные.
+  int val = Serial.read() - '0'; 
+  if (val == 1) irsend.sendPanasonic(PanasonicAddress,P1);   //если с COM порта поступил символ (1), начинаем отправлять через пин №3 (там ИК передатчик),- код кнопки №1 - моего пульта от телевизора Panasonic 
+  if (val == 2) irsend.sendPanasonic(PanasonicAddress,P2);
+  if (val == 3) irsend.sendPanasonic(PanasonicAddress,P3); 
+  if (val == 4) irsend.sendPanasonic(PanasonicAddress,P4);
+  if (val == 5) irsend.sendPanasonic(PanasonicAddress,P5);
+  if (val == 6) irsend.sendPanasonic(PanasonicAddress,P6);
+  if (val == 7) irsend.sendJVC(JVC1, 16,0);
+  if (val == 8) irsend.sendJVC(JVC2, 16,0);
+    
+ }  

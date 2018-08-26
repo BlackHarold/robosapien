@@ -1,0 +1,32 @@
+#include <Irremote.h>
+IRsend irsend;
+int y = 1;
+void setup() 
+{
+ Serial.begin(9600);
+}
+ void loop() 
+{
+if (Serial.available() > 0)
+{
+int x = Serial.read(); 
+if (x == 49) { y = 1; } // коды кнопок для простых команд кнопок пульта
+if (x == 50) { y = 2; } // коды кнопок для красных команд кнопок пульта
+if (x == 51) { y = 3; } // коды кнопок для зеленых команд кнопок пульта
+if (y == 1) { 
+if (x == 97) { irsend.sendNEC(0x68AE1A03, 32); delay(40); }
+if (x == 98) { irsend.sendNEC(0x2AF638B2, 32); delay(40); } 
+if (x == 99) { irsend.sendNEC(0x4FC2A4F4, 32); delay(40); }
+if (x == 100) { irsend.sendNEC(0xDC6B0933, 32); delay(40); }
+if (x == 101) { irsend.sendNEC(0xC7606564, 32); delay(40); }
+if (x == 102) { irsend.sendNEC(0x3AB8012B, 32); delay(40); }
+if (x == 103) { irsend.sendNEC(0xE2F4F720, 32); delay(40); }
+if (x == 104) { irsend.sendNEC(0xD1123114, 32); delay(40); }
+if (x == 105) { irsend.sendNEC(0x147D7566, 32); delay(40); }
+if (x == 106) { irsend.sendNEC(0xA3F34991, 32); delay(40); } 
+if (x == 107) { irsend.sendNEC(0x732FC0C9, 32); delay(40); }
+if (x == 108) { irsend.sendNEC(0x1C02D5D5, 32); delay(40); } 
+if (x == 109) { irsend.sendNEC(0x2BC49E4C, 32); delay(40); }
+if (x == 109) { irsend.sendNEC(0xEB5E6C0C, 32); delay(40); }
+if (x == 109) { irsend.sendNEC(0xF1E859FF, 32); delay(40); }
+		}

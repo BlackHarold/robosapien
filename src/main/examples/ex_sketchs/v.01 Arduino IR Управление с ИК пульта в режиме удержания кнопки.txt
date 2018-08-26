@@ -1,0 +1,123 @@
+/* урок от Дмитрия Осипова. http://www.youtube.com/user/d36073?feature=watch
+ v.01 Arduino IR Управление с ИК пульта в режиме удержания кнопки
+ Version 0.1 2013/07/02
+ 
+ После того как я выложил видео 
+ 1/6 Управление Arduino с ИК пульта - начало
+ http://www.youtube.com/watch?v=PjR9jlP4644
+ поступило немало  просьб такого содержания
+ (Антон Палыч 
+ Дмитрий, огромная благодарность за Ваш труд! Все просто и доходчиво.
+ Скачал Ваш пример "urok ot Dmitriya Osipova - upravleniye Arduino IK pulоtom"
+ Все работает но у меня возник вопрос. Как сделать, 
+ что бы кнопка определенного пина работала в режиме удержания а не в режиме "триггер" как в уроке?
+ То есть нажимая и удерживая кнопку пульта напряжение идет, отпуская исчезает.)
+ //
+ Поначалу я думал все это будет сделать очень легко и просто, а потом выяснилось что тут
+ много подводных камней.
+ в видео я подробно все это изложу
+v.01 Arduino IR Управление с ИК пульта в режиме удержания кнопки
+https://www.youtube.com/watch?v=AjIASUNiWkY
+ 
+ *******************************************************************
+ 
+ 
+ Скачать библиотеку IRremote для ИК пульта
+ https://disk.yandex.ru/public/?hash=yNz1au3lm3/yyMHOYtnZ2UGSf19wTvYBZnkxmhW4Xt0%3D
+ 
+ скетч arduino чтобы узнать код кнопки ИК пульта
+ sketch arduino buttons on the remote to learn the code
+ https://disk.yandex.ru/public/?hash=KzLtuC1ljISPaCoXw03D6mbiKea8spktcWL5QKJHGRQ%3D 
+ 
+ 4/6 как ? узнать код - кнопки своего ИК пульта
+ http://www.youtube.com/watch?v=InZuGntH_wk
+ 
+ Arduino Розетки, Управление любым ИК пультом, (программируемые на лету) socket IR remote control
+ http://www.youtube.com/watch?v=Nx6DUQ7Tx1w
+ 
+ усилитель ИК инфракрасного сигнала IR infrared signal amplifier на одном транзисторе Arduino
+ http://www.youtube.com/watch?v=3EYxONWSyR4
+ 
+ */
+
+#include <IRremote.h> // это скачанная библиотека
+
+int RECV_PIN = 11; //вход ИК приемника
+IRrecv irrecv(RECV_PIN);
+decode_results results;
+
+//eventTime, для паузы,  вместо delay,будем использовать функцию millis. 
+unsigned long eventTime=0;
+//индикация таймера
+int timer = 12;
+
+int L13 = 13; //пины управляющие моторами, светодиодами, или реле, чем угодно.
+int L2 = 2;
+int L3 = 3;
+int L4 = 4;
+int L5 = 5;
+int L6 = 6;
+int L7 = 7;
+int L8 = 8;
+
+void setup(){
+  irrecv.enableIRIn(); // включить приемник
+
+  pinMode(L13, OUTPUT); // назначаем пины как выходы
+  pinMode(L2, OUTPUT);
+  pinMode(L3, OUTPUT); 
+  pinMode(L4, OUTPUT);
+  pinMode(L5, OUTPUT);
+  pinMode(L6, OUTPUT);
+  pinMode(L7, OUTPUT);
+  pinMode(L8, OUTPUT);
+
+  pinMode(timer, OUTPUT);
+} 
+void loop() {
+  // Эта конструкция нужна чтобы конвертировать пульсирующий (-) с (ИК) преемника сигнал в постоянный.
+  //После появление и пропадания сигнала, состояние сразу не меняется! а ждет  100 миллисекунд.
+  //Если 100 миллисекунд не прошло, и поступил еще один сигнал с пульта, тогда таймер заново запускается на 100 миллисекунд.
+
+  //Проще говоря, пока кнопка на пульте нажата таймерПИН остается вКлюченным, если кнопка на пульте отпущена таймерПИН вЫключен.
+
+  // Читаем данные с (ИК) преемника. В момент приема данных у (ИК) приемника на выходе появляется пульсирующий (-)отрицательный сигнал
+  if (digitalRead(RECV_PIN) == LOW) 
+    //  Если обнаружен отрицательный сигнал запускаем таймер,и включаем таймерПИН //(timer, HIGH);
+    eventTime=millis(),digitalWrite(timer, HIGH);
+  //  Продолжительность работы таймера >100 миллисекунд. И ТаймерПИН выключаем //(timer, LOW)
+  if(millis()-eventTime>100) digitalWrite(timer, LOW)
+    //  и вЫключаем все
+    ,digitalWrite(L13, LOW),digitalWrite(L2, LOW),digitalWrite(L3, LOW)
+      ,digitalWrite(L4, LOW),digitalWrite(L5, LOW),digitalWrite(L6, LOW),digitalWrite(L7, LOW),digitalWrite(L8, LOW);
+
+  if (irrecv.decode(&results)) {
+    //ВАЖНО !!! ( 1000809 ) это код кнопки №1 - моего (ИК)! (инфракрасного пульта)!, -
+    //-у вашего пульта будет другой код, замените на свой!
+    // У моего пульта при нажатии на одну и ту же кнопку, могут отсылаться два разных (КОДА) сигнала,  чтобы обойти эту проблему
+    //я использовал Логический оператор "или" (||) if (results.value == 0x1000809 || results.value == 0xF7283C77
+    // Теперь неважно какой код отправлен  с кнопки пульта, первый или второй
+    // Если ваша кнопка пульта не страдает раздвоением личности, можете написать так if (results.value == 0x1000809 
+
+    //Только при условии если, (Одновременно),Обнаружен поступивший код кнопки
+    // и выключен ТаймерПИН,"и" "&&" (digitalRead(timer) == HIGH)
+    // включаем нужный нам pin, digitalWrite(L13, HIGH);
+
+    if (results.value == 0x1000809 || results.value == 0xF7283C77 && (digitalRead(timer) == HIGH) )digitalWrite(L13, HIGH); 
+    if (results.value == 0x1008889 || results.value == 0x757FB4DF && (digitalRead(timer) == HIGH) )digitalWrite(L2, HIGH);
+    if (results.value == 0x1004849 || results.value == 0xB33B4597 && (digitalRead(timer) == HIGH) )digitalWrite(L3, HIGH); 
+    if (results.value == 0x100C8C9 || results.value == 0x3C03E507 && (digitalRead(timer) == HIGH) )digitalWrite(L4, HIGH);
+    if (results.value == 0x1002829 || results.value == 0xE705551F && (digitalRead(timer) == HIGH) )digitalWrite(L5, HIGH); 
+    if (results.value == 0x100A8A9 || results.value == 0xA4A58EC7 && (digitalRead(timer) == HIGH) )digitalWrite(L6, HIGH);
+    if (results.value == 0x1006869 || results.value == 0xE2E45F7F && (digitalRead(timer) == HIGH) )digitalWrite(L7, HIGH); 
+    if (results.value == 0x100E8E9 || results.value == 0x6BACFEEF && (digitalRead(timer) == HIGH) )digitalWrite(L8, HIGH);
+
+    irrecv.resume(); 
+  }
+}
+
+
+
+
+
+
